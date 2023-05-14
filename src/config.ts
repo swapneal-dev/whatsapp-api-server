@@ -1,25 +1,25 @@
 export default {
-  secretKey: 'THISISMYSECURETOKEN',
+  secretKey: 'v1mLbHKXVJ1Lh3y4mVPO',
   host: 'http://localhost',
   port: '21465',
-  deviceName: 'WppConnect',
-  poweredBy: 'WPPConnect-Server',
-  startAllSession: true,
+  deviceName: 'WhatsBot',
+  poweredBy: 'NiledeTech',
+  startAllSession: false,
   tokenStoreType: 'file',
-  maxListeners: 15,
+  maxListeners: 0,
   customUserDataDir: './userDataDir/',
   webhook: {
     url: null,
     autoDownload: true,
     uploadS3: false,
-    readMessage: true,
+    readMessage: false,
     allUnreadOnStart: false,
-    listenAcks: true,
+    listenAcks: false,
     onPresenceChanged: true,
-    onParticipantsChanged: true,
-    onReactionMessage: true,
-    onPollResponse: true,
-    onRevokedMessage: true,
+    onParticipantsChanged: false,
+    onReactionMessage: false,
+    onPollResponse: false,
+    onRevokedMessage: false,
   },
   archive: {
     enable: false,
@@ -27,7 +27,7 @@ export default {
     daysToArchive: 45,
   },
   log: {
-    level: 'silly', // Before open a issue, change level to silly and retry a action
+    level: 'error', // Before open a issue, change level to silly and retry a action
     logger: ['console', 'file'],
   },
   createOptions: {
