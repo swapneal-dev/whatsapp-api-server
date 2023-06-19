@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Response } from 'express';
-
-import { Request } from '../types/Request';
+import { Request, Response } from 'express';
 
 function returnSucess(
   res: Response,
@@ -51,7 +49,17 @@ function returnError(
   });
 }
 
-export async function getBusinessProfilesProducts(req: Request, res: any) {
+export async function getBusinessProfilesProducts(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Catalog & Bussiness"]
+     #swagger.autoBody=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+   */
   const session = req.session;
   const { phone } = req.body;
 
@@ -67,7 +75,38 @@ export async function getBusinessProfilesProducts(req: Request, res: any) {
     returnError(req, res, session, error);
   }
 }
-export async function getOrderbyMsg(req: Request, res: any) {
+export async function getOrderbyMsg(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Catalog & Bussiness"]
+     #swagger.autoBody=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+     #swagger.requestBody = {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              messageId: { type: 'string' },
+            },
+            required: ['messageId'],
+          },
+          examples: {
+            'Default': {
+              value: {
+                messageId: '<message_id>',
+              },
+            },
+          },
+        },
+      },
+    }
+   */
   const session = req.session;
   const { messageId } = req.body;
 

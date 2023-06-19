@@ -19,11 +19,13 @@ import swaggerUi from 'swagger-ui-express';
 
 import uploadConfig from '../config/upload';
 import * as CatalogController from '../controller/catalogController';
+import * as CommunityController from '../controller/communityController';
 import * as DeviceController from '../controller/deviceController';
 import { encryptSession } from '../controller/encryptController';
 import * as GroupController from '../controller/groupController';
 import * as LabelsController from '../controller/labelsController';
 import * as MessageController from '../controller/messageController';
+import * as MiscController from '../controller/miscController';
 import * as OrderController from '../controller/orderController';
 import * as SessionController from '../controller/sessionController';
 import * as StatusController from '../controller/statusController';
@@ -57,9 +59,9 @@ routes.get(
   SessionController.getMediaByMessage
 );
 routes.get(
-  '/api/:session/status-session',
+  '/api/:session/get-platform-from-message/:messageId',
   verifyToken,
-  SessionController.getSessionState
+  DeviceController.getPlatformFromMessage
 );
 routes.get(
   '/api/:session/qrcode-session',
@@ -76,6 +78,10 @@ routes.post(
   verifyToken,
   statusConnection,
   SessionController.logOutSession
+);
+routes.post(
+  '/api/:session/:secretkey/clear-session-data',
+  MiscController.clearSessionData
 );
 routes.post(
   '/api/:session/close-session',
@@ -152,6 +158,11 @@ routes.post(
   verifyToken,
   statusConnection,
   MessageController.sendVoice64
+);
+routes.get(
+  '/api/:session/status-session',
+  verifyToken,
+  SessionController.getSessionState
 );
 routes.post(
   '/api/:session/send-status',
@@ -331,6 +342,19 @@ routes.get(
   verifyToken,
   statusConnection,
   DeviceController.getAllChats
+);
+routes.post(
+  '/api/:session/list-chats',
+  verifyToken,
+  statusConnection,
+  DeviceController.listChats
+);
+
+routes.get(
+  '/api/:session/all-chats-archived',
+  verifyToken,
+  statusConnection,
+  DeviceController.getAllChatsArchiveds
 );
 routes.get(
   '/api/:session/all-chats-with-messages',
@@ -784,6 +808,12 @@ routes.post(
 );
 
 // Business
+routes.post(
+  '/api/:session/edit-business-profile',
+  verifyToken,
+  statusConnection,
+  SessionController.editBusinessProfile
+);
 routes.get(
   '/api/:session/get-business-profiles-products',
   verifyToken,
@@ -795,6 +825,62 @@ routes.get(
   verifyToken,
   statusConnection,
   OrderController.getOrderbyMsg
+);
+routes.get('/api/:secretkey/backup-sessions', MiscController.backupAllSessions);
+routes.post(
+  '/api/:secretkey/restore-sessions',
+  upload.single('file'),
+  MiscController.restoreAllSessions
+);
+routes.get(
+  '/api/:session/take-screenshot',
+  verifyToken,
+  MiscController.takeScreenshot
+);
+routes.post('/api/:session/set-limit', MiscController.setLimit);
+
+//Communitys
+routes.post(
+  '/api/:session/create-community',
+  verifyToken,
+  statusConnection,
+  CommunityController.createCommunity
+);
+routes.post(
+  '/api/:session/deactivate-community',
+  verifyToken,
+  statusConnection,
+  CommunityController.deactivateCommunity
+);
+routes.post(
+  '/api/:session/add-community-subgroup',
+  verifyToken,
+  statusConnection,
+  CommunityController.addSubgroupsCommunity
+);
+routes.post(
+  '/api/:session/remove-community-subgroup',
+  verifyToken,
+  statusConnection,
+  CommunityController.removeSubgroupsCommunity
+);
+routes.post(
+  '/api/:session/promote-community-participant',
+  verifyToken,
+  statusConnection,
+  CommunityController.promoteCommunityParticipant
+);
+routes.post(
+  '/api/:session/demote-community-participant',
+  verifyToken,
+  statusConnection,
+  CommunityController.demoteCommunityParticipant
+);
+routes.get(
+  '/api/:session/community-participants/:id',
+  verifyToken,
+  statusConnection,
+  CommunityController.getCommunityParticipants
 );
 
 routes.post('/api/:session/chatwoot', DeviceController.chatWoot);

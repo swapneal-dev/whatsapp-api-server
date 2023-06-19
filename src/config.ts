@@ -3,7 +3,7 @@ export default {
   host: 'http://localhost',
   port: '21465',
   deviceName: 'WhatsBot',
-  poweredBy: 'NiledeTech',
+  poweredBy: 'WhatsBot',
   startAllSession: false,
   tokenStoreType: 'file',
   maxListeners: 0,
@@ -12,6 +12,7 @@ export default {
     url: null,
     autoDownload: true,
     uploadS3: false,
+    awsBucketName: null,
     readMessage: false,
     allUnreadOnStart: false,
     listenAcks: false,
@@ -20,6 +21,11 @@ export default {
     onReactionMessage: false,
     onPollResponse: false,
     onRevokedMessage: false,
+    onLabelUpdated: false,
+  },
+  chatwoot: {
+    sendQrCode: true,
+    sendStatus: true,
   },
   archive: {
     enable: false,

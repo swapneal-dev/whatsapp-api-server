@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Message, Whatsapp } from '@wppconnect-team/wppconnect';
+import { Request, Response } from 'express';
 import fs from 'fs';
 import mime from 'mime-types';
 import QRCode from 'qrcode';
@@ -21,11 +22,10 @@ import { Logger } from 'winston';
 
 import { version } from '../../package.json';
 import config from '../config';
-import { Request } from '../types/Request';
 import CreateSessionUtil from '../util/createSessionUtil';
 import { callWebHook, contactToArray } from '../util/functions';
 import getAllTokens from '../util/getAllTokens';
-import { clientsArray } from '../util/sessionUtil';
+import { clientsArray, deleteSessionOnArray } from '../util/sessionUtil';
 
 const SessionUtil = new CreateSessionUtil();
 
@@ -98,7 +98,21 @@ export async function download(message: any, client: any, logger: any) {
   }
 }
 
-export async function startAllSessions(req: Request, res: any) {
+export async function startAllSessions(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Auth"]
+     #swagger.autoBody=false
+     #swagger.operationId = 'startAllSessions'
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+     #swagger.parameters["secretkey"] = {
+      schema: 'THISISMYSECURECODE'
+     }
+   */
   const { secretkey } = req.params;
   const { authorization: token } = req.headers;
 
@@ -129,7 +143,20 @@ export async function startAllSessions(req: Request, res: any) {
     .json({ status: 'success', message: 'Starting all sessions' });
 }
 
-export async function showAllSessions(req: Request, res: any) {
+export async function showAllSessions(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Auth"]
+     #swagger.autoBody=false
+     #swagger.operationId = 'showAllSessions'
+     #swagger.autoQuery=false
+     #swagger.autoHeaders=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["secretkey"] = {
+      schema: 'THISISMYSECURETOKEN'
+     }
+   */
   const { secretkey } = req.params;
   const { authorization: token } = req.headers;
 
@@ -154,10 +181,39 @@ export async function showAllSessions(req: Request, res: any) {
     arr.push({ session: item });
   });
 
-  return res.status(200).json({ response: arr });
+  return res.status(200).json({ response: await getAllTokens(req) });
 }
 
-export async function startSession(req: Request, res: any) {
+export async function startSession(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Auth"]
+     #swagger.autoBody=false
+     #swagger.operationId = 'startSession'
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+     #swagger.requestBody = {
+      required: true,
+      "@content": {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              webhook: { type: "string" },
+              waitQrCode: { type: "boolean" },
+            }
+          },
+          example: {
+            webhook: "",
+            waitQrCode: false,
+          }
+        }
+      }
+     }
+   */
   const session = req.session;
   const { waitQrCode = false } = req.body;
 
@@ -165,9 +221,19 @@ export async function startSession(req: Request, res: any) {
   await SessionUtil.opendata(req, session, waitQrCode ? res : null);
 }
 
-export async function closeSession(req: Request, res: any) {
+export async function closeSession(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Auth"]
+     #swagger.operationId = 'closeSession'
+     #swagger.autoBody=true
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+   */
   const session = req.session;
-  const { clearSession = false } = req.body;
   try {
     if ((clientsArray as any)[session].status === null) {
       return await res
@@ -176,13 +242,6 @@ export async function closeSession(req: Request, res: any) {
     } else {
       (clientsArray as any)[session] = { status: null };
 
-      if (clearSession) {
-        const sessionFolder = `${config.customUserDataDir}/${session}`;
-        if (fs.existsSync(sessionFolder)) {
-          console.log('Deletando pasta: ' + sessionFolder);
-          fs.rmdirSync(sessionFolder, { recursive: true });
-        }
-      }
       await req.client.close();
       req.io.emit('whatsapp-status', false);
       callWebHook(req.client, req, 'closesession', {
@@ -202,20 +261,58 @@ export async function closeSession(req: Request, res: any) {
   }
 }
 
-export async function logOutSession(req: Request, res: any) {
+export async function logOutSession(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Auth"]
+     #swagger.operationId = 'logoutSession'
+   * #swagger.description = 'This route logout and delete session data'
+     #swagger.autoBody=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+   */
   try {
     const session = req.session;
     await req.client.logout();
+    deleteSessionOnArray(req.session);
 
-    req.io.emit('whatsapp-status', false);
-    callWebHook(req.client, req, 'logoutsession', {
-      message: `Session: ${session} logged out`,
-      connected: false,
-    });
+    setTimeout(async () => {
+      const pathUserData = config.customUserDataDir + req.session;
+      const pathTokens = __dirname + `../../../tokens/${req.session}.data.json`;
 
-    return await res
-      .status(200)
-      .json({ status: true, message: 'Session successfully closed' });
+      if (fs.existsSync(pathUserData)) {
+        await fs.promises.rm(pathUserData, {
+          recursive: true,
+          maxRetries: 5,
+          force: true,
+          retryDelay: 1000,
+        });
+      }
+      if (fs.existsSync(pathTokens)) {
+        await fs.promises.rm(pathTokens, {
+          recursive: true,
+          maxRetries: 5,
+          force: true,
+          retryDelay: 1000,
+        });
+      }
+
+      req.io.emit('whatsapp-status', false);
+      callWebHook(req.client, req, 'logoutsession', {
+        message: `Session: ${session} logged out`,
+        connected: false,
+      });
+
+      return await res
+        .status(200)
+        .json({ status: true, message: 'Session successfully closed' });
+    }, 500);
+    /*try {
+      await req.client.close();
+    } catch (error) {}*/
   } catch (error) {
     req.logger.error(error);
     return await res
@@ -224,7 +321,18 @@ export async function logOutSession(req: Request, res: any) {
   }
 }
 
-export async function checkConnectionSession(req: Request, res: any) {
+export async function checkConnectionSession(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Auth"]
+     #swagger.operationId = 'CheckConnectionState'
+     #swagger.autoBody=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+   */
   try {
     await req.client.isConnected();
 
@@ -234,7 +342,34 @@ export async function checkConnectionSession(req: Request, res: any) {
   }
 }
 
-export async function downloadMediaByMessage(req: Request, res: any) {
+export async function downloadMediaByMessage(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Messages"]
+     #swagger.autoBody=false
+     #swagger.operationId = 'downloadMediabyMessage'
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+     #swagger.requestBody = {
+      required: true,
+      "@content": {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              messageId: { type: "string" },
+            }
+          },
+          example: {
+            messageId: '<messageId>'
+          }
+        }
+      }
+     }
+   */
   const client = req.client;
   const { messageId } = req.body;
 
@@ -274,7 +409,21 @@ export async function downloadMediaByMessage(req: Request, res: any) {
   }
 }
 
-export async function getMediaByMessage(req: Request, res: any) {
+export async function getMediaByMessage(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Messages"]
+     #swagger.autoBody=false
+     #swagger.operationId = 'getMediaByMessage'
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+     #swagger.parameters["session"] = {
+      schema: 'messageId'
+     }
+   */
   const client = req.client;
   const { messageId } = req.params;
 
@@ -308,7 +457,19 @@ export async function getMediaByMessage(req: Request, res: any) {
   }
 }
 
-export async function getSessionState(req: Request, res: any) {
+export async function getSessionState(req: Request, res: Response) {
+  /**
+     #swagger.tags = ["Auth"]
+     #swagger.operationId = 'getSessionState'
+     #swagger.summary = 'Retrieve status of a session'
+     #swagger.autoBody = false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+   */
   try {
     const { waitQrCode = false } = req.body;
     const client = req.client;
@@ -336,7 +497,18 @@ export async function getSessionState(req: Request, res: any) {
   }
 }
 
-export async function getQrCode(req: Request, res: any) {
+export async function getQrCode(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Auth"]
+     #swagger.autoBody=false
+     #swagger.operationId = 'getQrCode'
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+   */
   try {
     if (req?.client?.urlcode) {
       const qr = req.client.urlcode
@@ -372,7 +544,19 @@ export async function getQrCode(req: Request, res: any) {
   }
 }
 
-export async function killServiceWorker(req: Request, res: any) {
+export async function killServiceWorker(req: Request, res: Response) {
+  /**
+   * #swagger.ignore=true
+   * #swagger.tags = ["Messages"]
+     #swagger.operationId = 'killServiceWorkier'
+     #swagger.autoBody=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+   */
   try {
     return res
       .status(200)
@@ -387,7 +571,19 @@ export async function killServiceWorker(req: Request, res: any) {
   }
 }
 
-export async function restartService(req: Request, res: any) {
+export async function restartService(req: Request, res: Response) {
+  /**
+   * #swagger.ignore=true
+   * #swagger.tags = ["Messages"]
+     #swagger.operationId = 'restartService'
+     #swagger.autoBody=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+   */
   try {
     return res
       .status(200)
@@ -401,7 +597,38 @@ export async function restartService(req: Request, res: any) {
   }
 }
 
-export async function subscribePresence(req: Request, res: any) {
+export async function subscribePresence(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Misc"]
+     #swagger.operationId = 'subscribePresence'
+     #swagger.autoBody=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+     #swagger.requestBody = {
+      required: true,
+      "@content": {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              phone: { type: "string" },
+              isGroup: { type: "boolean" },
+              all: { type: "boolean" },
+            }
+          },
+          example: {
+            phone: '5521999999999',
+            isGroup: false,
+            all: false,
+          }
+        }
+      }
+     }
+   */
   try {
     const { phone, isGroup = false, all = false } = req.body;
 
@@ -428,6 +655,76 @@ export async function subscribePresence(req: Request, res: any) {
     return await res.status(500).json({
       status: 'error',
       message: 'Error on subscribe presence',
+      error: error,
+    });
+  }
+}
+
+export async function editBusinessProfile(req: Request, res: Response) {
+  /**
+   * #swagger.tags = ["Profile"]
+     #swagger.operationId = 'editBusinessProfile'
+   * #swagger.description = 'Edit your bussiness profile'
+     #swagger.autoBody=false
+     #swagger.security = [{
+            "bearerAuth": []
+     }]
+     #swagger.parameters["session"] = {
+      schema: 'NERDWHATS_AMERICA'
+     }
+     #swagger.parameters["obj"] = {
+      in: 'body',
+      schema: {
+        $adress: 'Av. Nossa Senhora de Copacabana, 315',
+        $email: 'test@test.com.br',
+        $categories: {
+          $id: "133436743388217",
+          $localized_display_name: "Artes e entretenimento",
+          $not_a_biz: false,
+        },
+        $website: [
+          "https://www.wppconnect.io",
+          "https://www.teste2.com.br",
+        ],
+      }
+     }
+     
+     #swagger.requestBody = {
+      required: true,
+      "@content": {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              adress: { type: "string" },
+              email: { type: "string" },
+              categories: { type: "object" },
+              websites: { type: "array" },
+            }
+          },
+          example: {
+            adress: 'Av. Nossa Senhora de Copacabana, 315',
+            email: 'test@test.com.br',
+            categories: {
+              $id: "133436743388217",
+              $localized_display_name: "Artes e entretenimento",
+              $not_a_biz: false,
+            },
+            website: [
+              "https://www.wppconnect.io",
+              "https://www.teste2.com.br",
+            ],
+          }
+        }
+      }
+     }
+   */
+  try {
+    return res.status(200).json(await req.client.editBusinessProfile(req.body));
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Error on edit business profile',
       error: error,
     });
   }
