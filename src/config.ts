@@ -10,7 +10,7 @@ export default {
   customUserDataDir: './userDataDir/',
   webhook: {
     url: null,
-    autoDownload: true,
+    autoDownload: false,
     uploadS3: false,
     readMessage: false,
     allUnreadOnStart: false,
@@ -24,8 +24,8 @@ export default {
     onSelfMessage: false,
   },
   chatwoot: {
-    sendQrCode: true,
-    sendStatus: true,
+    sendQrCode: false,
+    sendStatus: false,
   },
   archive: {
     enable: false,
