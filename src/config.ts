@@ -1,5 +1,5 @@
 export default {
-  secretKey: 'v1mLbHKXVJ1Lh3y4mVPO',
+  secretKey: 'TOKEN',
   host: 'http://localhost',
   port: '21465',
   deviceName: 'WhatsBot',
