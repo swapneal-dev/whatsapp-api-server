@@ -14,7 +14,7 @@ export default {
     uploadS3: false,
     readMessage: false,
     allUnreadOnStart: false,
-    listenAcks: false,
+    listenAcks: true,
     onPresenceChanged: true,
     onParticipantsChanged: false,
     onReactionMessage: false,
