@@ -1,6 +1,7 @@
 # WPPConnect Team
 
 ## _WPPConnect Server_
+
 ![WPPConnect-SERVER](https://i.imgur.com/y1ts6RR.png)
 
 [![npm version](https://img.shields.io/npm/v/@wppconnect/server.svg?color=green)](https://www.npmjs.com/package/@wppconnect/server)
@@ -153,6 +154,14 @@ This server use config.ts file to define some options, default values are:
     onRevokedMessage: true,
     // send all events of labels for webook and socket
     onLabelUpdated: true,
+    // 'event', 'from' ou 'type' to ignore and not send to webhook
+    ignore: [],
+  },
+  websocket: {
+    // Just leave one active, here or on webhook.autoDownload
+    autoDownload: false,
+    // Just leave one active, here or on webhook.uploadS3, to avoid duplication in S3
+    uploadS3: false,
   },
   // send data to chatwoot
   chatwoot: {
