@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.478.0",
-    "@img/sharp-darwin-x64": "^0.33.1",
     "@wppconnect-team/wppconnect": "^1.28.4",
     "archiver": "^6.0.1",
     "axios": "^1.6.2",
