@@ -28,6 +28,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.478.0",
     "@wppconnect-team/wppconnect": "^1.28.4",
     "archiver": "^6.0.1",
     "@aws-sdk/client-s3": "^3.490.0",
@@ -99,8 +100,8 @@
     "release-it": "^17.0.1",
     "rimraf": "^5.0.5",
     "shx": "^0.3.4",
-    "ts-jest": "^29.1.1",
     "swagger-ui-dist": "^5.10.5",
+    "ts-jest": "^29.1.1",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
