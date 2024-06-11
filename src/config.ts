@@ -1,9 +1,11 @@
+import { ServerOptions } from './types/ServerOptions';
+
 export default {
   secretKey: 'TOKEN',
   host: 'http://localhost',
   port: '21465',
-  deviceName: 'WhatsBot',
-  poweredBy: 'WhatsBot',
+  deviceName: 'Klik',
+  poweredBy: 'Nilede Technologies',
   startAllSession: false,
   tokenStoreType: 'file',
   maxListeners: 0,
@@ -38,7 +40,7 @@ export default {
     daysToArchive: 45,
   },
   log: {
-    level: 'error', // Before open a issue, change level to silly and retry a action
+    level: 'silly', // Before open a issue, change level to silly and retry a action
     logger: ['console', 'file'],
   },
   createOptions: {
@@ -95,11 +97,11 @@ export default {
     redisPrefix: 'docker',
   },
   aws_s3: {
-    region: 'sa-east-1',
+    region: 'sa-east-1' as any,
     access_key_id: null,
     secret_key: null,
     defaultBucketName: null,
     endpoint: null,
     forcePathStyle: null,
   },
-};
+} as unknown as ServerOptions;
